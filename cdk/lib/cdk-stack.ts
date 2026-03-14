@@ -2,6 +2,8 @@ import * as cdk from 'aws-cdk-lib/core';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch'
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
 import path from 'path';
 import { Construct } from 'constructs';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -34,6 +36,14 @@ export class CdkStack extends cdk.Stack {
 
     // give fetchStockkMovers permission to write to stocksTable
     stocksTable.grantWriteData(fetchHighestStockMover);
+
+    // defining FetchHighestStockMover EventBridge rule to trigger lambda
+    const scheduleRule = new events.Rule(this, 'FetchHighestStockMoverSchedule', {
+        schedule: events.Schedule.cron({ minute: '0', hour: '20' }) // trigger every 24 hours at 8pm UTC (when stock market closes)
+    });
+
+    // connecting EventBridge rule to FetchHighestStockMover lambda function
+    scheduleRule.addTarget(new targets.LambdaFunction(fetchHighestStockMover));
 
     // setting up Cloudwatch alarm for FetchStockMovers lambda function
     if (fetchHighestStockMover.timeout) {
