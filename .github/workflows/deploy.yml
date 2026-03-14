@@ -1,0 +1,47 @@
+name: Deploy CDK Stack to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # clone the repository and set up Node.js environment
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '23'
+
+      # install lambda dependencies and test lambda function
+      - name: Install Lambda dependencies
+        working-directory: lambda
+        run: npm ci
+
+      - name: Run Lambda tests
+        working-directory: lambda
+        run: npm test
+
+      # install CDK dependencies and synthesize CDK stack
+      - name: Install CDK dependencies
+        working-directory: cdk
+        run: npm ci
+
+      - name: CDK Synth
+        working-directory: cdk
+        run: npx cdk synth
+
+      # deploy CDK stack to AWS
+      - name: CDK Deploy
+        working-directory: cdk
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'us-west-2'
+        run: npx cdk deploy --require-approval never
