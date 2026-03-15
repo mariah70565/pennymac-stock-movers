@@ -8,6 +8,12 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: 'us-west-2'
+      STOCKS_TABLE_NAME: 'test-table'
+      MASSIVE_API_KEY_SECRET_NAME: 'test-secret'
 
     steps:
       # clone the repository and set up Node.js environment
@@ -40,8 +46,4 @@ jobs:
       # deploy CDK stack to AWS
       - name: CDK Deploy
         working-directory: cdk
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-west-2'
         run: npx cdk deploy --require-approval never

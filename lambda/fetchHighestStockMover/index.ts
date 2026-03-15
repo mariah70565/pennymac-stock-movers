@@ -3,8 +3,16 @@ import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-sec
 import { restClient } from '@massive.com/client-js';
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 
-const secretsManager = new SecretsManagerClient({});
-const dynamoDB = new DynamoDBClient({});
+const secretsManager = new SecretsManagerClient(
+    {
+        region: process.env.AWS_REGION || 'us-west-2' //default region if AWS_REGION isn't set
+    }
+);
+const dynamoDB = new DynamoDBClient(
+    {
+        region: process.env.AWS_REGION || 'us-west-2' //default region if AWS_REGION isn't set
+    }
+);
 
 export const handler = async (event: ScheduledEvent, context: Context) => {
     const TABLENAME = process.env.STOCKS_TABLE_NAME!;
