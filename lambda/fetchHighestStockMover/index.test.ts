@@ -7,7 +7,7 @@ jest.mock('@massive.com/client-js', () => ({
       results: []
     })
   })
-}));
+}), { virtual: true });
 
 process.env.STOCKS_TABLE_NAME = "test-table";
 process.env.MASSIVE_API_KEY_SECRET_NAME = "test-secret";
