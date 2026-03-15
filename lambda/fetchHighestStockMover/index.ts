@@ -134,10 +134,10 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
         const putCommand = new PutItemCommand({
             TableName: TABLENAME,
             Item: {
-                Date: { S: today }, //current date as partition key
-                Ticker: { S: highestMover.ticker }, //ticker as sort key
-                PercentChange: { N: highestMover.percentChange.toString() }, //percent change as attribute
-                ClosePrice: {N: highestMover.closePrice.toString()} //close price as attribute
+                date: { S: today }, //current date as partition key
+                ticker: { S: highestMover.ticker }, //ticker as sort key
+                percentChange: { N: highestMover.percentChange.toString() }, //percent change as attribute
+                closePrice: { N: highestMover.closePrice.toString()} //close price as attribute
             }
         });
 
