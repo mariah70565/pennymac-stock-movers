@@ -28,11 +28,11 @@ jobs:
 
       # install lambda dependencies and test lambda function
       - name: Install Lambda dependencies
-        working-directory: lambda
+        working-directory: cdk/lambda
         run: npm ci
 
       - name: Run Lambda tests
-        working-directory: lambda
+        working-directory: cdk/lambda
         run: npm test
 
       # install CDK dependencies and synthesize CDK stack
