@@ -16,11 +16,11 @@ export class CdkStack extends cdk.Stack {
     // +++++++++ defining table schema with primary keys: (date, ticker) +++++++++
     const stocksTable = new dynamodb.Table(this, 'StocksTable', {
         partitionKey: {
-            name: 'date',
+            name: 'leaderboard',
             type: dynamodb.AttributeType.STRING,
         },
         sortKey: {
-            name: 'ticker',
+            name: 'date',
             type: dynamodb.AttributeType.STRING,
         },
         billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, //charge per request

@@ -145,6 +145,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
         const putCommand = new PutItemCommand({
             TableName: TABLENAME,
             Item: {
+                leaderboard: { S: "TOP_MOVERS"},
                 date: { S: today }, //current date as partition key
                 ticker: { S: highestMover.ticker }, //ticker as sort key
                 percentChange: { N: highestMover.percentChange.toString() }, //percent change as attribute
