@@ -39,6 +39,7 @@ export class CdkStack extends cdk.Stack {
         secretStringValue: cdk.SecretValue.unsafePlainText(massiveApiKeySecretValue)
     });
 
+    // FETCH HIGHEST STOCK MOVER LAMBDA
     // +++++++++ defining FetchHighestStockMover lambda Function +++++++++
     const fetchHighestStockMover = new lambda.Function(this, 'FetchHighestStockMover', {
         runtime: lambda.Runtime.NODEJS_24_X,
@@ -80,5 +81,24 @@ export class CdkStack extends cdk.Stack {
             alarmName: 'Fetch Stock Mover Timeout'
         });
     }
+
+    // +++++++++ defining SeedStocks lambda Function +++++++++
+    const seedStocks = new lambda.Function(this, 'SeedStocks', {
+        runtime: lambda.Runtime.NODEJS_24_X,
+        handler: 'seedStocks/index.handler', //where lambda handler lives
+        code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda')), //where lambda dependencies are stored
+        timeout: cdk.Duration.seconds(7), //to signal Cloudwatch alarm
+        environment: {
+            STOCKS_TABLE_NAME: stocksTable.tableName, //pass stocks table name to lambda environment variables
+            MASSIVE_API_KEY_SECRET_NAME: massiveApiKeySecret.secretName //pass secret name to lambda environment variables
+        }
+    });
+
+    // ++++++++ granting permissions to SeedStocks lambda function +++++++++
+    // give seedStocks permission to write to stocksTable
+    stocksTable.grantWriteData(seedStocks);
+
+    // give seedStocks permission to read API key from Secrets Manager
+    massiveApiKeySecret.grantRead(seedStocks);
   }
 }

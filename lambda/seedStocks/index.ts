@@ -18,18 +18,6 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
     const TABLENAME = process.env.STOCKS_TABLE_NAME!;
     const APIKEYSECRETNAME = process.env.MASSIVE_API_KEY_SECRET_NAME!;
 
-    const today = new Date().toISOString().split('T')[0]; //current date in YYYY-MM-DD format
-
-    // avoid wasting API calls on weekends, when the market is closed
-    const dayOfWeek = new Date().getDay(); //get current day of week (0-6, where 0 is Sunday)
-    if (dayOfWeek === 0 || dayOfWeek === 6) { //if today is Saturday or Sunday, skip fetch and store
-        console.log("Market is closed today, skipping fetch and store");
-        return {
-            statusCode: 200, //success status code to signal function executed successfully even though no data was fetched
-            body: "Market is closed today, skipping fetch and store"
-        }
-    }
-
     const watchList = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA']; //list of tickers to compare
 
     console.log("Fetching highest stock mover...")
@@ -57,14 +45,14 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
     }
 
     // 2. call Massive API to fetch highest stock mover
-    const fetchStockData = async (rest: any, retries = 3): Promise<any[]> => {
+    const fetchStockData = async (rest: any, date: string, retries = 3): Promise<any[]> => {
         // implementing retry logic up to 3 attempts with delays for rate limit errors and other API errors
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 //fetch aggregate stock data for all stocks
                 const response = await rest.getGroupedStocksAggregates( 
                 {
-                    date: today,
+                    date: date,
                     adjusted: true,
                 });
 
@@ -101,21 +89,50 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
     }
 
     // 3. fetch percent change for each stock and find highest mover
-    let movers: any[] = [];
     try {
         const rest = restClient(massiveApiKey, 'https://api.massive.com'); //initialize Massive API client
-        const results = await fetchStockData(rest); //fetch stock data
+        const seedDates = ["2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13"]
+        for (const date of seedDates) {
+            const results = await fetchStockData(rest, date); //fetch stock data
+            
+            // filter results by watchlist and sort by absolute percent change
+            const movers = results
+                .filter((stock: any) => watchList.includes(stock.ticker)) //filter for stocks in watchlist
+                .map((stock: any) => ({
+                    ticker: stock.ticker,
+                    percentChange: stock.o !== 0 ? ((stock.c - stock.o) / stock.o) * 100 : 0, //calculate percent change from open to close. 0 if open price is 0 to avoid division by 0 error
+                    closePrice: stock.c //close price to store in DynamoDB
+                }))
+                .sort((a: any, b: any) => Math.abs(b.percentChange) - Math.abs(a.percentChange)); //sort in descending orderby absolute percent change
+            
+            // 4. store highest mover data in DynamoDB
+            const highestMover = movers[0]; //grab highest mover in movers list
         
-        // filter results by watchlist and sort by absolute percent change
-        movers = results
-            .filter((stock: any) => watchList.includes(stock.ticker)) //filter for stocks in watchlist
-            .map((stock: any) => ({
-                ticker: stock.ticker,
-                percentChange: stock.o !== 0 ? ((stock.c - stock.o) / stock.o) * 100 : 0, //calculate percent change from open to close. 0 if open price is 0 to avoid division by 0 error
-                closePrice: stock.c //close price to store in DynamoDB
-            }))
-            .sort((a: any, b: any) => Math.abs(b.percentChange) - Math.abs(a.percentChange)); //sort in descending orderby absolute percent change
+            // return if no highest mover is found today
+            if (!highestMover) {
+                console.log(`No highest mover found for ${date}`);
+                continue; //skip to next date in seedDates
+            }
 
+            console.log(`Highest Mover for ${date}:`, highestMover);
+            
+            // define put command to store highest mover data in DynamoDB
+            const putCommand = new PutItemCommand({
+                TableName: TABLENAME,
+                Item: {
+                    leaderboard: { S: "TOP_MOVERS"}, //partition key
+                    date: { S: date }, //current date as sort key
+                    ticker: { S: highestMover.ticker },
+                    percentChange: { N: highestMover.percentChange.toString() }, //percent change as attribute
+                    closePrice: { N: highestMover.closePrice.toString()} //close price as attribute
+                }
+            });
+
+            // send command
+            await dynamoDB.send(putCommand);
+            console.log(`Highest mover data stored in DynamoDB for ${date}`);
+        }
+            
     } catch (error) {
         console.error("Error fetching data from Massive API:", error);
 
@@ -125,42 +142,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
         };
     }
 
-    // 4. store highest mover data in DynamoDB
-    try {
-        const highestMover = movers[0]; //grab highest mover in movers list
-        
-        // return if no highest mover is found today
-        if (!highestMover) {
-            console.log("No highest mover found today");
-
-            return {
-                statusCode: 503, //no stock data was found
-                body: "No stock movers found for today"
-            };
-        }
-
-        console.log('Highest Mover:', highestMover);
-        
-        // define put command to store highest mover data in DynamoDB
-        const putCommand = new PutItemCommand({
-            TableName: TABLENAME,
-            Item: {
-                leaderboard: { S: "TOP_MOVERS"}, //partition key
-                date: { S: today }, //current date as sort key
-                ticker: { S: highestMover.ticker },
-                percentChange: { N: highestMover.percentChange.toString() }, //percent change as attribute
-                closePrice: { N: highestMover.closePrice.toString()} //close price as attribute
-            }
-        });
-
-        // send command
-        await dynamoDB.send(putCommand);
-        console.log("Highest mover data stored in DynamoDB");
-
-    } catch (error) {
-        console.error("Error writing to DynamoDB:", error);
-        throw new Error("Failed to store data in DynamoDB");
-    }
+    
 
     return {
         statusCode: 200,
