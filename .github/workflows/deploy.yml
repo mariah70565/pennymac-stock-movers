@@ -14,6 +14,7 @@ jobs:
       AWS_REGION: 'us-west-2'
       STOCKS_TABLE_NAME: 'test-table'
       MASSIVE_API_KEY_SECRET_NAME: 'test-secret'
+      MASSIVE_API_KEY: ${{ secrets.MASSIVE_API_KEY }}
 
     steps:
       # clone the repository and set up Node.js environment
