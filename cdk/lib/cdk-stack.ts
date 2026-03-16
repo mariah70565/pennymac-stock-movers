@@ -43,7 +43,7 @@ export class CdkStack extends cdk.Stack {
     // FETCH HIGHEST STOCK MOVER LAMBDA
     // +++++++++ defining FetchHighestStockMover lambda Function +++++++++
     const fetchHighestStockMover = new lambdaNode.NodejsFunction(this, 'FetchHighestStockMover', {
-        entry: path.resolve(__dirname, '../../lambda/fetchHighestStockMover/index.ts'), //where lambda handler lives
+        entry: path.join(__dirname, '../../lambda/fetchHighestStockMover/index.ts'), //where lambda handler lives
         runtime: lambda.Runtime.NODEJS_24_X,
         handler: 'handler', //name of handler in index.ts file
         timeout: cdk.Duration.seconds(7), //to signal Cloudwatch alarm
