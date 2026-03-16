@@ -66,7 +66,7 @@ export class CdkStack extends cdk.Stack {
     });
 
     // connecting EventBridge rule to FetchHighestStockMover lambda function
-    scheduleRule.addTarget(new targets.LambdaFunction(fetchHighestStockMover));
+    // scheduleRule.addTarget(new targets.LambdaFunction(fetchHighestStockMover));
 
     // ++++++++ setting up Cloudwatch alarm for FetchStockMovers lambda function +++++++++
     if (fetchHighestStockMover.timeout) {
