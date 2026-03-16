@@ -19,6 +19,17 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
     const APIKEYSECRETNAME = process.env.MASSIVE_API_KEY_SECRET_NAME!;
 
     const today = new Date().toISOString().split('T')[0]; //current date in YYYY-MM-DD format
+
+    // avoid wasting API calls on weekends, when the market is closed
+    const dayOfWeek = new Date().getDay(); //get current day of week (0-6, where 0 is Sunday)
+    if (dayOfWeek === 0 || dayOfWeek === 6) { //if today is Saturday or Sunday, skip fetch and store
+        console.log("Market is closed today, skipping fetch and store");
+        return {
+            statusCode: 200, //success status code to signal function executed successfully even though no data was fetched
+            body: "Market is closed today, skipping fetch and store"
+        }
+    }
+
     const watchList = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA']; //list of tickers to compare
 
     console.log("Fetching highest stock mover...")
@@ -57,7 +68,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
                     adjusted: true,
                 });
 
-                // if no stock data is found for today, return empty array to signal no data found (will be caught after function call)
+                // if no stock data is found for today, return empty array to signal no data found
                 if (!response.results || response.results.length === 0) {
                     console.log("No stock data found for today");
                     return [];
@@ -100,10 +111,10 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
             .filter((stock: any) => watchList.includes(stock.ticker)) //filter for stocks in watchlist
             .map((stock: any) => ({
                 ticker: stock.ticker,
-                percentChange: stock.o !== 0 ? ((stock.c - stock.o) / stock.o) * 100 : 0, //calculate percent change from open to close
+                percentChange: stock.o !== 0 ? ((stock.c - stock.o) / stock.o) * 100 : 0, //calculate percent change from open to close. 0 if open price is 0 to avoid division by 0 error
                 closePrice: stock.c //close price to store in DynamoDB
             }))
-            .sort((a: any, b: any) => Math.abs(b.percentChange) - Math.abs(a.percentChange)); //sort by absolute percent change
+            .sort((a: any, b: any) => Math.abs(b.percentChange) - Math.abs(a.percentChange)); //sort in descending orderby absolute percent change
 
     } catch (error) {
         console.error("Error fetching data from Massive API:", error);
@@ -123,7 +134,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
             console.log("No highest mover found today");
 
             return {
-                statusCode: 200, //no stock data was found
+                statusCode: 503, //no stock data was found
                 body: "No stock movers found for today"
             };
         }

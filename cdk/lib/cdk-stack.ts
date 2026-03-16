@@ -29,10 +29,11 @@ export class CdkStack extends cdk.Stack {
 
     // +++++++++ fetching API key for Massive API from GitHub Secrets and storing in Secrets Manager +++++++++
     // if API key doesn't exist, throw error to prevent stack from deploying without API key secret
-    // if (!process.env.MASSIVE_API_KEY) {
-    //     throw new Error("Failed to create API key secret");
-    // }
-    const massiveApiKeySecretValue = process.env.MASSIVE_API_KEY || "placeholder-api-key"; //placeholder value for testing purposes
+    const massiveApiKeySecretValue = process.env.MASSIVE_API_KEY;
+    if (!massiveApiKeySecretValue) {
+        throw new Error("Failed to create API key secret");
+    }
+
     const massiveApiKeySecret = new secretsmanager.Secret(this, 'MassiveApiKeySecret', {
         secretName: 'massive-api-key',
         secretStringValue: cdk.SecretValue.unsafePlainText(massiveApiKeySecretValue)
