@@ -92,7 +92,7 @@ export class CdkStack extends cdk.Stack {
         entry: path.join(__dirname, '../lambda/seedStocks/index.ts'), //where lambda handler lives
         runtime: lambda.Runtime.NODEJS_24_X,
         handler: 'handler', //name of handler in index.ts file
-        timeout: cdk.Duration.seconds(7), //to signal Cloudwatch alarm
+        timeout: cdk.Duration.seconds(30), //to signal Cloudwatch alarm
         environment: {
             STOCKS_TABLE_NAME: stocksTable.tableName, //pass stocks table name to lambda environment variables
             MASSIVE_API_KEY_SECRET_NAME: massiveApiKeySecret.secretName //pass secret name to lambda environment variables

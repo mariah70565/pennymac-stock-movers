@@ -94,6 +94,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
         const seedDates = ["2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16"]
         for (const date of seedDates) {
             const results = await fetchStockData(rest, date); //fetch stock data
+            console.log(`Sample result for ${date}:`, JSON.stringify(results.slice(0, 3)));
             
             // filter results by watchlist and sort by absolute percent change
             const movers = results
