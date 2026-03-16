@@ -14,6 +14,19 @@ const dynamoDB = new DynamoDBClient(
     }
 );
 
+interface StockAggregate {
+    T: string //The exchange symbol that this item is traded under.
+    c: number //The close price for the symbol in the given time period.
+    h: number //The highest price for the symbol in the given time period.
+    l: number //The lowest price for the symbol in the given time period.
+    n?: number //optional The number of transactions in the aggregate window.
+    o: number //The open price for the symbol in the given time period.
+    otc?: boolean //optional Whether or not this aggregate is for an OTC ticker. This field will be left off if false.
+    t: number //The Unix millisecond timestamp for the end of the aggregate window.
+    v: number //The trading volume of the symbol in the given time period.
+    vw?: number //optional The volume weighted average price.
+}
+
 export const handler = async (event: ScheduledEvent, context: Context) => {
     const TABLENAME = process.env.STOCKS_TABLE_NAME!;
     const APIKEYSECRETNAME = process.env.MASSIVE_API_KEY_SECRET_NAME!;
@@ -45,7 +58,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
     }
 
     // 2. call Massive API to fetch highest stock mover
-    const fetchStockData = async (rest: any, date: string, retries = 3): Promise<any[]> => {
+    const fetchStockData = async (rest: any, date: string, retries = 3): Promise<StockAggregate[]> => {
         // implementing retry logic up to 3 attempts with delays for rate limit errors and other API errors
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
@@ -94,17 +107,17 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
         const seedDates = ["2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16"]
         for (const date of seedDates) {
             const results = await fetchStockData(rest, date); //fetch stock data
-            console.log(`Sample result for ${date}:`, JSON.stringify(results.slice(0, 3)));
+            // console.log(`Sample result for ${date}:`, JSON.stringify(results.slice(0, 3)));
             
             // filter results by watchlist and sort by absolute percent change
             const movers = results
-                .filter((stock: any) => watchList.includes(stock.ticker)) //filter for stocks in watchlist
-                .map((stock: any) => ({
-                    ticker: stock.ticker,
+                .filter((stock: StockAggregate) => watchList.includes(stock.T)) //filter for stocks in watchlist
+                .map((stock: StockAggregate) => ({
+                    ticker: stock.T,
                     percentChange: stock.o !== 0 ? ((stock.c - stock.o) / stock.o) * 100 : 0, //calculate percent change from open to close. 0 if open price is 0 to avoid division by 0 error
                     closePrice: stock.c //close price to store in DynamoDB
                 }))
-                .sort((a: any, b: any) => Math.abs(b.percentChange) - Math.abs(a.percentChange)); //sort in descending orderby absolute percent change
+                .sort((a, b) => Math.abs(b.percentChange) - Math.abs(a.percentChange)); //sort in descending orderby absolute percent change
             
             // 4. store highest mover data in DynamoDB
             const highestMover = movers[0]; //grab highest mover in movers list
