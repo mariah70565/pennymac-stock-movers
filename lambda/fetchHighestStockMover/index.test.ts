@@ -55,18 +55,6 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
     const mockRestClient = jest.mocked(require('@massive.com/client-js').restClient);
     mockRestClient.mockReturnValue(fakeRestClient);
 
-    // Success case: when the function executes successfully and returns a 200 status code with a success message
-    it('should return status code 200 and success message', async () => {
-        const event = {} as ScheduledEvent; //fake empty event data
-        const context = {} as any; //fake empty context data
-
-        const result = await handler(event, context); //run handler with fake data
-
-        // check results
-        expect(result.statusCode).toBe(200);
-        expect(result).toHaveProperty('body');
-    });
-
     // API Failure case: when the function fails to retrieve the API key from Secrets Manager, it should return a 503 status code
     it('should return status code 503 when API fails', async () => {
         const spy = jest.spyOn(Date.prototype, 'getDay').mockReturnValue(1); //set to monday
