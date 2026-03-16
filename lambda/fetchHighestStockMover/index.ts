@@ -18,20 +18,6 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
     const TABLENAME = process.env.STOCKS_TABLE_NAME!;
     const APIKEYSECRETNAME = process.env.MASSIVE_API_KEY_SECRET_NAME!;
 
-    const today = new Date().toISOString().split('T')[0]; //current date in YYYY-MM-DD format
-
-    // avoid wasting API calls on weekends, when the market is closed
-    const dayOfWeek = new Date().getDay(); //get current day of week (0-6, where 0 is Sunday)
-    if (dayOfWeek === 0 || dayOfWeek === 6) { //if today is Saturday or Sunday, skip fetch and store
-        console.log("Market is closed today, skipping fetch and store");
-        return {
-            statusCode: 200, //success status code to signal function executed successfully even though no data was fetched
-            body: "Market is closed today, skipping fetch and store"
-        }
-    }
-
-    const watchList = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA']; //list of tickers to compare
-
     console.log("Fetching highest stock mover...")
 
     let massiveApiKey: string;
@@ -54,6 +40,18 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
     } catch (error) {
         console.error("Error retrieving API key:", error);
         throw new Error("Failed to retrieve API key");
+    }
+
+    const today = new Date().toISOString().split('T')[0]; //current date in YYYY-MM-DD format
+
+    // avoid wasting API calls on weekends, when the market is closed
+    const dayOfWeek = new Date().getDay(); //get current day of week (0-6, where 0 is Sunday)
+    if (dayOfWeek === 0 || dayOfWeek === 6) { //if today is Saturday or Sunday, skip fetch and store
+        console.log("Market is closed today, skipping fetch and store");
+        return {
+            statusCode: 200, //success status code to signal function executed successfully even though no data was fetched
+            body: "Market is closed today, skipping fetch and store"
+        }
     }
 
     // 2. call Massive API to fetch highest stock mover
@@ -102,6 +100,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
 
     // 3. fetch percent change for each stock and find highest mover
     let movers: any[] = [];
+    const watchList = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA']; //list of tickers to compare
     try {
         const rest = restClient(massiveApiKey, 'https://api.massive.com'); //initialize Massive API client
         const results = await fetchStockData(rest); //fetch stock data
