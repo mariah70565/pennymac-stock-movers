@@ -6,6 +6,7 @@ import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as lambdaNode from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import path from 'path';
 import { Construct } from 'constructs';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -70,7 +71,7 @@ export class CdkStack extends cdk.Stack {
     });
 
     // connecting EventBridge rule to FetchHighestStockMover lambda function
-    // scheduleRule.addTarget(new targets.LambdaFunction(fetchHighestStockMover));
+    scheduleRule.addTarget(new targets.LambdaFunction(fetchHighestStockMover));
 
     // ++++++++ setting up Cloudwatch alarm for FetchStockMovers lambda function +++++++++
     if (fetchHighestStockMover.timeout) {
@@ -85,6 +86,43 @@ export class CdkStack extends cdk.Stack {
             alarmName: 'Fetch Stock Mover Timeout'
         });
     }
+
+    // GET MOVERS LAMBDA
+    // +++++++++ defining GetMovers lambda Function +++++++++
+    const getMovers = new lambdaNode.NodejsFunction(this, 'GetMovers', {
+        entry: path.join(__dirname, '../lambda/getMovers/index.ts'), //where lambda handler lives
+        runtime: lambda.Runtime.NODEJS_24_X,
+        handler: 'handler', //name of handler in index.ts file
+        timeout: cdk.Duration.seconds(7), //to signal Cloudwatch alarm
+        environment: {
+            STOCKS_TABLE_NAME: stocksTable.tableName, //pass stocks table name to lambda environment variables
+        },
+        bundling: {
+            externalModules: ['aws-sdk'], // keep aws-sdk external for Lambda
+        },
+    });
+
+    // ++++++++ granting permissions to GetMovers lambda function +++++++++
+    // give getMovers permission to read from stocksTable
+    stocksTable.grantReadData(getMovers);
+
+    // ++++++++ creating API Gateway REST API to trigger GetMovers lambda function +++++++++
+    const stockMoversApi = new apigateway.RestApi(this, 'StockMoversApi', {
+        restApiName: 'Stock Movers Service',
+        description: 'This service returns the last 7 days of "winning stocks" from DynamoDB.',
+        deployOptions: {
+            loggingLevel: apigateway.MethodLoggingLevel.INFO, //enable logging for debugging
+            metricsEnabled: true, //enable API Gateway metrics in CloudWatch
+        },
+        defaultCorsPreflightOptions: {
+            allowOrigins: apigateway.Cors.ALL_ORIGINS, //allow CORS for all origins (for browser-based clients)
+            allowMethods: ['GET']
+        }
+    });
+
+    // ++++++++ define API Gateway resource and method to trigger GetMovers lambda function ++++++++
+    const moversResource = stockMoversApi.root.addResource('movers'); //endpoint: /movers
+    moversResource.addMethod('GET', new apigateway.LambdaIntegration(getMovers)); //GET /movers triggers getMovers lambda function
 
     // SEED STOCKS LAMBDA
     // +++++++++ defining SeedStocks lambda Function +++++++++
