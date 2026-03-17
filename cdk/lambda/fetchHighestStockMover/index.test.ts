@@ -57,9 +57,13 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
 
     // API Failure case: when the function fails to retrieve the API key from Secrets Manager, it should return a 503 status code
     it('should return status code 503 when API fails', async () => {
-        const spy = jest.spyOn(Date.prototype, 'getDay').mockReturnValue(1); //set to monday
-
-        fakeRestClient.getGroupedStocksAggregates.mockRejectedValueOnce(new Error("API error")); //mock API call to throw an error
+        const daySpy = jest.spyOn(Date.prototype, 'getDay').mockReturnValue(1); //set to monday
+        const timeoutSpy =jest.spyOn(global, 'setTimeout').mockImplementation((cb: any) => { cb(); return 0 as any; });
+        
+        fakeRestClient.getGroupedStocksAggregates
+            .mockRejectedValueOnce(new Error("API error"))
+            .mockRejectedValueOnce(new Error("API error"))
+            .mockRejectedValueOnce(new Error("API error")); //mock API call to throw an error after 3 failed attempts
 
         const event = {} as ScheduledEvent; //fake empty event data
         const context = {} as any; //fake empty context data
@@ -69,7 +73,8 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
         // check results
         expect(result.statusCode).toBe(503);
 
-        spy.mockRestore(); //clean up stock
+        daySpy.mockRestore(); //clean up day mock
+        timeoutSpy.mockRestore(); //clean up timeout mock
     });
 
     // No Stock Data case: when the function executes successfully but no stock data is found, it should return a 404 status code
