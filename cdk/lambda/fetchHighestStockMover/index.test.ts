@@ -72,8 +72,8 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
         spy.mockRestore(); //clean up stock
     });
 
-    // No Stock Data case: when the function executes successfully but no stock data is found, it should return a 503 status code
-    it('should return status code 503 when no stock data is found', async () => {
+    // No Stock Data case: when the function executes successfully but no stock data is found, it should return a 404 status code
+    it('should return status code 404 when no stock data is found', async () => {
         // Mock getDay to return 1 (Monday) to avoid weekend check
         const spy = jest.spyOn(Date.prototype, 'getDay').mockReturnValue(1); //set to monday
 
@@ -83,7 +83,7 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
         const result = await handler(event, context); //run handler with fake data
 
         // check results
-        expect(result.statusCode).toBe(503);
+        expect(result.statusCode).toBe(404);
 
         spy.mockRestore(); //clean up mock
     });
@@ -111,10 +111,10 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
 
         fakeRestClient.getGroupedStocksAggregates.mockResolvedValueOnce({
             results: [
-                { ticker: 'AAPL', o: 100, c: 110 }, //10% increase
-                { ticker: 'MSFT', o: 200, c: 180 }, //10% decrease
-                { ticker: 'GOOGL', o: 150, c: 165 }, //15% increase
-                { ticker: 'AMZN', o: 300, c: 270 }, //15% decrease
+                { T: 'AAPL', o: 100, c: 110, h: 110, l: 100, t: 0, v: 0 }, //10% increase
+                { T: 'MSFT', o: 200, c: 180, h: 200, l: 180, t: 0, v: 0 }, //10% decrease
+                { T: 'GOOGL', o: 150, c: 165, h: 165, l: 150, t: 0, v: 0 }, //15% increase
+                { T: 'AMZN', o: 300, c: 270, h: 300, l: 270, t: 0, v: 0 }, //15% decrease
             ]
         });
 
