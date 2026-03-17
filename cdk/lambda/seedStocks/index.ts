@@ -107,7 +107,6 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
         const seedDates = ["2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16"]
         for (const date of seedDates) {
             const results = await fetchStockData(rest, date); //fetch stock data
-            // console.log(`Sample result for ${date}:`, JSON.stringify(results.slice(0, 3)));
             
             // filter results by watchlist and sort by absolute percent change
             const movers = results
@@ -152,7 +151,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
 
         return {
             statusCode: 503, //service unavailable status code to signal API fetch failure
-            body: "Stock API unavailable, skipping today's fetch and store. Will try again tomorrow."
+            body: JSON.stringify({ message: 'Stock API unavailable, skipping today\'s fetch and store. Will try again tomorrow.' })
         };
     }
 
@@ -160,6 +159,6 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
 
     return {
         statusCode: 200,
-        body: "Highest Stock mover successfully fetched and stored"
+        body: JSON.stringify({ message: 'Highest Stock mover successfully fetched and stored' })
     };
 };

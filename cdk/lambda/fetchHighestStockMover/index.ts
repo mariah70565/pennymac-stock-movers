@@ -14,6 +14,19 @@ const dynamoDB = new DynamoDBClient(
     }
 );
 
+interface StockAggregate {
+    T: string //The exchange symbol that this item is traded under.
+    c: number //The close price for the symbol in the given time period.
+    h: number //The highest price for the symbol in the given time period.
+    l: number //The lowest price for the symbol in the given time period.
+    n?: number //optional The number of transactions in the aggregate window.
+    o: number //The open price for the symbol in the given time period.
+    otc?: boolean //optional Whether or not this aggregate is for an OTC ticker. This field will be left off if false.
+    t: number //The Unix millisecond timestamp for the end of the aggregate window.
+    v: number //The trading volume of the symbol in the given time period.
+    vw?: number //optional The volume weighted average price.
+}
+
 export const handler = async (event: ScheduledEvent, context: Context) => {
     const TABLENAME = process.env.STOCKS_TABLE_NAME!;
     const APIKEYSECRETNAME = process.env.MASSIVE_API_KEY_SECRET_NAME!;
@@ -50,12 +63,12 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
         console.log("Market is closed today, skipping fetch and store");
         return {
             statusCode: 200, //success status code to signal function executed successfully even though no data was fetched
-            body: "Market is closed today, skipping fetch and store"
+            body: JSON.stringify({ message: 'Market is closed today, skipping fetch and store' })
         }
     }
 
     // 2. call Massive API to fetch highest stock mover
-    const fetchStockData = async (rest: any, retries = 3): Promise<any[]> => {
+    const fetchStockData = async (rest: any, retries = 3): Promise<StockAggregate[]> => {
         // implementing retry logic up to 3 attempts with delays for rate limit errors and other API errors
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
@@ -107,20 +120,20 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
         
         // filter results by watchlist and sort by absolute percent change
         movers = results
-            .filter((stock: any) => watchList.includes(stock.ticker)) //filter for stocks in watchlist
-            .map((stock: any) => ({
-                ticker: stock.ticker,
+            .filter((stock: StockAggregate) => watchList.includes(stock.T)) //filter for stocks in watchlist
+            .map((stock: StockAggregate) => ({
+                ticker: stock.T,
                 percentChange: stock.o !== 0 ? ((stock.c - stock.o) / stock.o) * 100 : 0, //calculate percent change from open to close. 0 if open price is 0 to avoid division by 0 error
                 closePrice: stock.c //close price to store in DynamoDB
             }))
-            .sort((a: any, b: any) => Math.abs(b.percentChange) - Math.abs(a.percentChange)); //sort in descending orderby absolute percent change
+            .sort((a, b) => Math.abs(b.percentChange) - Math.abs(a.percentChange)); //sort in descending orderby absolute percent change
 
     } catch (error) {
         console.error("Error fetching data from Massive API:", error);
 
         return {
             statusCode: 503, //service unavailable status code to signal API fetch failure
-            body: "Stock API unavailable, skipping today's fetch and store. Will try again tomorrow."
+            body: JSON.stringify({ message: 'Stock API unavailable, skipping today\'s fetch and store. Will try again tomorrow.' })
         };
     }
 
@@ -133,8 +146,8 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
             console.log("No highest mover found today");
 
             return {
-                statusCode: 503, //no stock data was found
-                body: "No stock movers found for today"
+                statusCode: 404, //no stock data was found
+                body: JSON.stringify({ message: 'No stock movers found for today' })
             };
         }
 
@@ -163,6 +176,6 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
 
     return {
         statusCode: 200,
-        body: "Highest Stock mover successfully fetched and stored"
+        body: JSON.stringify({ message: 'Highest Stock mover successfully fetched and stored' })
     };
 };

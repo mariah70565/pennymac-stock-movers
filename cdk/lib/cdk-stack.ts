@@ -110,10 +110,6 @@ export class CdkStack extends cdk.Stack {
     const stockMoversApi = new apigateway.RestApi(this, 'StockMoversApi', {
         restApiName: 'Stock Movers Service',
         description: 'This service returns the last 7 days of "winning stocks" from DynamoDB.',
-        deployOptions: {
-            loggingLevel: apigateway.MethodLoggingLevel.INFO, //enable logging for debugging
-            metricsEnabled: true, //enable API Gateway metrics in CloudWatch
-        },
         defaultCorsPreflightOptions: {
             allowOrigins: apigateway.Cors.ALL_ORIGINS, //allow CORS for all origins (for browser-based clients)
             allowMethods: ['GET']
