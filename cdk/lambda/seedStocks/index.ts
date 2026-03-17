@@ -104,7 +104,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
     // 3. fetch percent change for each stock and find highest mover
     try {
         const rest = restClient(massiveApiKey, 'https://api.massive.com'); //initialize Massive API client
-        const seedDates = ["2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16"]
+        const seedDates = ["2026-03-16"]
         for (const date of seedDates) {
             const results = await fetchStockData(rest, date); //fetch stock data
             
