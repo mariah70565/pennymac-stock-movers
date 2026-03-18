@@ -40,7 +40,11 @@ jobs:
         working-directory: cdk
         run: npm ci
 
-      # build frontend
+      # install frontend dependencies and built frontend
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
       - name: Build frontend
         working-directory: frontend
         env:
