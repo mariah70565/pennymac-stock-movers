@@ -1,8 +1,8 @@
 # Stock Movers Dashboard
 A fully automated serverless pipeline that tracks daily stock market movers from a watchlist of stocks, computes and stores the one with the highest absolute percent change, and displays 7 of them at a time on a live dashboard.
-- Top Movers leaderboard showing the 3 most frequent daily winners
-- A table of stocks with the highest absolute percent change (color coded by green and red to show positive and negative percent change)
-- A line graph showing percent change of stocks
+- 🏆 Top Movers leaderboard showing the 3 most frequent daily winners
+- 💵 A table of stocks with the highest absolute percent change (color coded by green and red to show positive and negative percent change)
+- 📈 A line graph showing percent change of stocks
 
 ## Features
 - Daily automated stock data triggered by EventBridge every 24 hours
@@ -28,7 +28,7 @@ A fully automated serverless pipeline that tracks daily stock market movers from
 - **S3** hosts the React frontend
 
 ## CI/CD
-Pushing to `main` automatically runs tests, builds the frontend, and deploys the  stack via GitHub Actions.
+GitHub Actions automatically runs tests, builds the frontend, and deploys the  stack on every push to `main` branch
 
 ### Repository secrets:
 - AWS_ACCESS_KEY_ID
@@ -45,7 +45,7 @@ Pushing to `main` automatically runs tests, builds the frontend, and deploys the
 - Node.js
 - AWS CLI
 - AWS CDK CLI (`npm install -g aws-cdk`)
-- a [Massive API](https://massive.com) account and API key & secret
+- [Massive API](https://massive.com) account and API key & secret
 
 ## Deployment
 
@@ -92,7 +92,6 @@ npm install
 
 ### 8. Build frontend
 ```bash
-cd ../frontend
 npm run build
 ```
 
