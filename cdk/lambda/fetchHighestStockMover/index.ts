@@ -55,15 +55,17 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
         throw new Error("Failed to retrieve API key");
     }
 
-    const today = new Date().toISOString().split('T')[0]; //current date in YYYY-MM-DD format
+    const yesterday = new Date()
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+    const today = yesterday.toISOString().split('T')[0]; //yesterday's date in YYYY-MM-DD format to be called today
 
     // avoid wasting API calls on weekends, when the market is closed
-    const dayOfWeek = new Date().getDay(); //get current day of week (0-6, where 0 is Sunday)
+    const dayOfWeek = yesterday.getUTCDay(); //get current day of week (0-6, where 0 is Sunday)
     if (dayOfWeek === 0 || dayOfWeek === 6) { //if today is Saturday or Sunday, skip fetch and store
         console.log("Market is closed today, skipping fetch and store");
         return {
             statusCode: 200, //success status code to signal function executed successfully even though no data was fetched
-            body: JSON.stringify({ message: 'Market is closed today, skipping fetch and store' })
+            body: JSON.stringify({ message: 'Market was closed yesterday, skipping fetch and store' })
         }
     }
 

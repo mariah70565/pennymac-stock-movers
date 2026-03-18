@@ -57,7 +57,7 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
 
     // API Failure case: when the function fails to retrieve the API key from Secrets Manager, it should return a 503 status code
     it('should return status code 503 when API fails', async () => {
-        const daySpy = jest.spyOn(Date.prototype, 'getDay').mockReturnValue(1); //set to monday
+        const daySpy = jest.spyOn(Date.prototype, 'getUTCDay').mockReturnValue(1); //set to monday
         const timeoutSpy =jest.spyOn(global, 'setTimeout').mockImplementation((cb: any) => { cb(); return 0 as any; });
         
         fakeRestClient.getGroupedStocksAggregates
@@ -80,7 +80,7 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
     // No Stock Data case: when the function executes successfully but no stock data is found, it should return a 404 status code
     it('should return status code 404 when no stock data is found', async () => {
         // Mock getDay to return 1 (Monday) to avoid weekend check
-        const spy = jest.spyOn(Date.prototype, 'getDay').mockReturnValue(1); //set to monday
+        const spy = jest.spyOn(Date.prototype, 'getUTCDay').mockReturnValue(1); //set to monday
 
         const event = {} as ScheduledEvent; //fake empty event data
         const context = {} as any; //fake empty context data
@@ -96,7 +96,7 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
     // Weekend case: when the function executes on a weekend so no stock data is found, it should return a 200 status code with a message indicated the market is closed
     it('should return status code 200 when the market is closed', async () => {
         // Mock getDay to return 1 (Monday) to avoid weekend check
-        const spy = jest.spyOn(Date.prototype, 'getDay').mockReturnValue(6); //set to saturday
+        const spy = jest.spyOn(Date.prototype, 'getUTCDay').mockReturnValue(6); //set to saturday
 
         const event = {} as ScheduledEvent; //fake empty event data
         const context = {} as any; //fake empty context data
@@ -112,7 +112,7 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
 
     // Data processing case: when the function executes successfully and processes stock data, it should return a 200 status code with a success message
     it('should process stock data and return status code 200', async () => {
-        const spy = jest.spyOn(Date.prototype, 'getDay').mockReturnValue(1); //set to monday
+        const spy = jest.spyOn(Date.prototype, 'getUTCDay').mockReturnValue(1); //set to monday
 
         fakeRestClient.getGroupedStocksAggregates.mockResolvedValueOnce({
             results: [
