@@ -79,7 +79,7 @@ function Chart({ movers }: ChartProps) {
     };
 
     return (
-        <div className="rounded-lg overflow-hidden border-4 border-violet-600 dark:border-violet-800 shadow-lg hover:shadow-xl shadow-violet-400 dark:shadow-violet-600 transition-shadow duration-300">
+        <div className="flex justify-center rounded-lg overflow-hidden border-4 border-violet-600 dark:border-violet-800 shadow-lg hover:shadow-xl shadow-violet-400 dark:shadow-violet-600 transition-shadow duration-300">
             <Line data={{ labels: dates, datasets}} options={options}/>
         </div>
     )
