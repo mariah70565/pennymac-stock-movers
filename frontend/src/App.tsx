@@ -1,12 +1,144 @@
+import { useEffect, useState } from 'react'
+import axios from 'axios'
+import { IoMoonOutline, IoSunnyOutline, IoArrowBackOutline, IoArrowForwardOutline } from 'react-icons/io5'
+import type { Mover, ApiResponse } from './types'
 import './App.css'
 
-function App() {
+const API_URL = import.meta.env.VITE_API_URL
+console.log('API_URL from environment:', API_URL)
 
-  return (
-    <>
-      <p className='flex justify-center text-3xl font-bold'>This is Stock Movers</p>
-    </>
-  )
+function App() {
+    const [movers, setMovers] = useState<Mover[]>([]) //holds the stock movers data fetched from the API
+    const [nextPageToken, setNextPageToken] = useState<string | null>(null) //stores the token for fetching the next page of data, if available
+    const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]) //holds all pageTokens that have been explored to move around multiple sets of data
+    const [currentPage, setCurrentPage] = useState(0) //holds currentPage to index into page history to retrieve page token
+    const [loading, setLoading] = useState(true) //indicated when the app is in the process of fetching data from the API, used to show a loading state to the user
+    const [error, setError] = useState<string | null>(null) //stores any error messages that occur during the data fetching process, used to display error information to the user
+
+    const fetchMovers = async (token?: string | null) => {
+        try {
+            setLoading(true)
+            const url = token ? `${API_URL}?nextPageToken=${token}` : API_URL
+            console.log('Fetching movers from URL:', url)
+            const response = await axios.get<ApiResponse>(url)
+            setMovers(response.data.movers)
+            setNextPageToken(response.data.nextPageToken || null)
+
+        } catch (error) {
+            console.error('Error fetching movers:', error)
+            setError('Failed to fetch movers')
+        
+        } finally {
+            setLoading(false)
+        }
+    }
+    useEffect(() => {
+        fetchMovers()
+    }, [])
+
+    const goForward = () => {
+        const newPage = currentPage + 1
+        setPageHistory([...pageHistory, nextPageToken])
+        setCurrentPage(newPage)
+        fetchMovers(nextPageToken)
+    }
+
+    const goBack = () => {
+        const newPage = currentPage - 1
+        setCurrentPage(newPage)
+        fetchMovers(pageHistory[newPage])
+    }
+
+    const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+    const toggleTheme = () => {
+        const newTheme = theme === 'light' ? 'dark' : 'light'
+        setTheme(newTheme)
+        document.documentElement.classList.toggle('dark', newTheme === 'dark')
+        localStorage.setItem('theme', newTheme)
+    }
+
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
+        if (savedTheme) {
+            setTheme(savedTheme as 'light' | 'dark')
+            document.documentElement.classList.toggle('dark', savedTheme === 'dark')
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setTheme('dark')
+            document.documentElement.classList.add('dark')
+        }
+    }, [])
+    
+    return (
+        <div className='h-full bg-white dark:bg-indigo-950 p-4'>
+            <div className='flex flex-col items-center mb-8 gap-3'>
+                <h1 className='text-3xl font-bold text-center whitespace-nowrap text-violet-600 dark:text-violet-300'>Stock Movers Dashboard</h1>
+    
+                <button
+                    className='flex items-center gap-2 px-4 py-2 text-base rounded-3xl border-4 border-indigo-950 text-violet-300 bg-indigo-950 shadow-md hover:border-violet-400 transition-border duration-150 dark:text-violet-600 dark:bg-white'
+                    onClick={toggleTheme}
+                >
+                    {theme === 'light' ? 'Toggle Dark Mode' : 'Toggle Light Mode'}
+                    {theme === 'light' ? <IoMoonOutline/> : <IoSunnyOutline/>}
+                </button>
+            </div>
+
+            {loading ? (
+                <p className='flex justify-center text-2xl text-violet-600'>Loading...</p>
+            ) : error ? (
+                <p className='flex justify-center text-2xl text-red-500'>{error}</p>
+            ) : (
+                <div className='max-w-5xl mx-auto flex flex-col gap-10'>
+                    {/* table of winning stocks */}
+                    <div className='rounded-lg overflow-hidden border-4 border-violet-600 dark:border-violet-800 shadow-lg hover:shadow-xl shadow-violet-400 dark:shadow-violet-600 transition-shadow duration-300'>
+                        <table className='w-full'>
+                            <thead className=''>
+                                <tr className='bg-violet-600 dark:bg-violet-800 text-white font-bold text-xl'>
+                                    <th className='py-2 px-4 text-left'>Stock</th>
+                                    <th className='py-2 px-4 text-left'>Date</th>
+                                    <th className='py-2 px-4 text-left'>Percent Change</th>
+                                    <th className='py-2 px-4 text-left'>Close Price</th>
+                                </tr>
+                            </thead>
+                            <tbody className='divide-y divide-gray-200 dark:divide-slate-600'>
+                                {movers.map((mover) => (
+                                    <tr
+                                        key={mover.date}
+                                        className={`bg-white dark:bg-slate-800 text-black dark:text-white border-l-8 ${mover.percentChange >= 0 ? 'border-l-green-500 dark:border-l-green-400' : 'border-l-red-500'}`}
+                                    >
+                                        <td className='py-2 px-4 font-bold'>{mover.ticker}</td>
+                                        <td className='py-2 px-4'>{mover.date}</td>
+                                        <td className={`py-2 px-4 ${mover.percentChange >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500'}`}>{mover.percentChange > 0 ? '+' : ''}{mover.percentChange.toFixed(2)}%</td>
+                                        <td className='py-2 px-4'>${mover.closePrice.toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* table pagination */}
+                    <div className='flex items-center justify-center gap-4'>
+                        <button
+                            className='flex items-center gap-2 px-4 py-2 text-base rounded-3xl bg-violet-500 dark:bg-violet-800 hover:bg-violet-800 dark:hover:bg-violet-600 text-white transition-colors duration-150 disabled:opacity-50 disabled:hover:bg-violet-600 dark:disabled:hover:bg-violet-800 disabled:hover:cursor-not-allowed'
+                            onClick={goBack}
+                            disabled={currentPage === 0}
+                        >
+                            <IoArrowBackOutline />
+                            Newer
+                        </button>
+                        <button
+                            className='flex items-center gap-2 px-4 py-2 text-base rounded-3xl bg-violet-500 dark:bg-violet-800 hover:bg-violet-800 dark:hover:bg-violet-600 text-white transition-colors duration-150 disabled:opacity-50 disabled:hover:bg-violet-600 dark:disabled:hover:bg-violet-800 disabled:hover:cursor-not-allowed'
+                            onClick={goForward}
+                            disabled={!nextPageToken}
+                        >
+                            Older
+                            <IoArrowForwardOutline />
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
 }
 
 export default App
