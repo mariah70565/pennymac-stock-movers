@@ -105,7 +105,7 @@ describe('Unit Test for FetchHighestStockMover Lambda Function', function() {
 
         // check results
         expect(result.statusCode).toBe(200);
-        expect(result.body).toContain("Market is closed today");
+        expect(result.body).toContain("Market was closed yesterday");
 
         spy.mockRestore(); //clean up mock
     });
