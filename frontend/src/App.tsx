@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { IoMoonOutline, IoSunnyOutline, IoArrowBackOutline, IoArrowForwardOutline } from 'react-icons/io5'
 import type { Mover, ApiResponse } from './types'
+import Leaderboard from './components/Leaderboard'
 import './App.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -71,7 +72,7 @@ function App() {
     
     return (
         <div className='h-full bg-white dark:bg-indigo-950 p-4'>
-            <div className='flex flex-col items-center mb-8 gap-3'>
+            <div className='flex flex-col items-center mb-8 gap-2'>
                 <h1 className='text-3xl font-bold text-center whitespace-nowrap text-violet-600 dark:text-violet-300'>Stock Movers Dashboard</h1>
     
                 <button
@@ -89,11 +90,14 @@ function App() {
                 <p className='flex justify-center text-2xl text-red-500'>{error}</p>
             ) : (
                 <div className='max-w-5xl mx-auto flex flex-col gap-10'>
+                    {/* leaderboard of top movers according to current page */}
+                    <Leaderboard movers={movers}/>
+
                     {/* table of winning stocks */}
                     <div className='rounded-lg overflow-hidden border-4 border-violet-600 dark:border-violet-800 shadow-lg hover:shadow-xl shadow-violet-400 dark:shadow-violet-600 transition-shadow duration-300'>
                         <table className='w-full'>
                             <thead className=''>
-                                <tr className='bg-violet-600 dark:bg-violet-800 text-white font-bold text-xl'>
+                                <tr className='bg-violet-600 dark:bg-violet-800 text-white font-bold text-lg'>
                                     <th className='py-2 px-4 text-left'>Stock</th>
                                     <th className='py-2 px-4 text-left'>Date</th>
                                     <th className='py-2 px-4 text-left'>Percent Change</th>
