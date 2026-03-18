@@ -3,10 +3,10 @@ import axios from 'axios'
 import { IoMoonOutline, IoSunnyOutline, IoArrowBackOutline, IoArrowForwardOutline } from 'react-icons/io5'
 import type { Mover, ApiResponse } from './types'
 import Leaderboard from './components/Leaderboard'
+import Chart from './components/Chart'
 import './App.css'
 
 const API_URL = import.meta.env.VITE_API_URL
-console.log('API_URL from environment:', API_URL)
 
 function App() {
     const [movers, setMovers] = useState<Mover[]>([]) //holds the stock movers data fetched from the API
@@ -36,6 +36,9 @@ function App() {
     useEffect(() => {
         fetchMovers()
     }, [])
+
+    // get sorted dates for x axis
+    const dates = [...movers.map(mover => mover.date)].sort()
 
     // to grab older movers (next 7 in table)
     const goForward = () => {
@@ -77,12 +80,15 @@ function App() {
     }, [])
     
     return (
-        <div className='h-full bg-white dark:bg-indigo-950 p-4'>
+        <div className='min-h-screen bg-white dark:bg-indigo-950 p-4'>
             {/* page header */}
             <div className='flex flex-col items-center mb-8 gap-2'>
-                {/* page title */}
-                <h1 className='text-3xl font-bold text-center whitespace-nowrap text-violet-600 dark:text-violet-300'>Stock Movers Dashboard</h1>
+                {/* website title */}
+                <h1 className='text-3xl font-bold text-center whitespace-nowrap text-black dark:text-white'>Stock Movers Dashboard</h1>
 
+                {/* current page title */}
+                <h2 className='text-2xl font-bold text-center whitespace-nowrap text-violet-600 dark:text-violet-400'>{dates[0]} to {dates[dates.length - 1]}</h2>
+                
                 {/* theme toggler */}
                 <button
                     className='flex items-center gap-2 px-4 py-2 text-base rounded-3xl border-4 border-indigo-950 text-violet-300 bg-indigo-950 shadow-md hover:border-violet-400 transition-border duration-150 dark:text-violet-600 dark:bg-white'
@@ -108,6 +114,9 @@ function App() {
                     {/* leaderboard of top movers according to current page */}
                     <Leaderboard movers={movers}/>
 
+                    {/* line chart of current page's movers */}
+                    <Chart movers={movers}/>
+
                     {/* table of winning stocks */}
                     <div className='rounded-lg overflow-hidden border-4 border-violet-600 dark:border-violet-800 shadow-lg hover:shadow-xl shadow-violet-400 dark:shadow-violet-600 transition-shadow duration-300'>
                         <table className='w-full'>
@@ -121,6 +130,7 @@ function App() {
                                 </tr>
                             </thead>
                             {/* table content */}
+                            {/* percent change is green if positive or no change, red if negative change */}
                             <tbody className='divide-y divide-gray-200 dark:divide-slate-600'>
                                 {movers.map((mover) => (
                                     <tr
@@ -129,7 +139,7 @@ function App() {
                                     >
                                         <td className='py-2 px-4 font-bold'>{mover.ticker}</td>
                                         <td className='py-2 px-4'>{mover.date}</td>
-                                        <td className={`py-2 px-4 ${mover.percentChange >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500'}`}>{mover.percentChange > 0 ? '+' : ''}{mover.percentChange.toFixed(2)}%</td> {/* green if positive or no change, red if negative change */}
+                                        <td className={`py-2 px-4 ${mover.percentChange >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500'}`}>{mover.percentChange > 0 ? '+' : ''}{mover.percentChange.toFixed(2)}%</td>
                                         <td className='py-2 px-4'>${mover.closePrice.toFixed(2)}</td>
                                     </tr>
                                 ))}

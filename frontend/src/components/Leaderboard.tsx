@@ -24,7 +24,7 @@ function Leaderboard({ movers }: LeaderboardProps) {
         <div className="rounded-lg overflow-hidden border-4 border-violet-600 dark:border-violet-800 shadow-lg hover:shadow-xl shadow-violet-400 dark:shadow-violet-600 transition-shadow duration-300">
             {/* leaderboard header */}
             <div className="flex text-lg gap-2 justify-center items-center text-white bg-violet-600 dark:bg-violet-800 py-2 px-4">
-                <h2 className="font-bold text-center whitespace-nowrap">Top Movers</h2>
+                <h3 className="font-bold text-center whitespace-nowrap">Top Movers</h3>
                 <IoTrophy/>
             </div>
 
