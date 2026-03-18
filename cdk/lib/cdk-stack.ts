@@ -7,6 +7,8 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as lambdaNode from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import path from 'path';
 import { Construct } from 'constructs';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -142,5 +144,26 @@ export class CdkStack extends cdk.Stack {
 
     // give seedStocks permission to read API key from Secrets Manager
     massiveApiKeySecret.grantRead(seedStocks);
+
+    // initializing s3 bucket for frontend hosting
+    const websiteBucket = new s3.Bucket(this, 'WebsiteBucket', {
+        websiteIndexDocument: 'index.html',
+        websiteErrorDocument: 'index.html',
+        publicReadAccess: true,
+        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ACLS_ONLY,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        autoDeleteObjects: true,
+    });
+
+    // deploy frontend build to S3
+    new s3deploy.BucketDeployment(this, 'DeployWebsite', {
+        sources: [s3deploy.Source.asset('../frontend/dist')],
+        destinationBucket: websiteBucket,
+    });
+
+    // output the website URL
+    new cdk.CfnOutput(this, 'WebsiteURL', {
+        value: websiteBucket.bucketWebsiteUrl,
+    });
   }
 }

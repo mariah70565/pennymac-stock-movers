@@ -35,11 +35,19 @@ jobs:
         working-directory: cdk/lambda
         run: npm test
 
-      # install CDK dependencies and synthesize CDK stack
+      # install CDK dependencies
       - name: Install CDK dependencies
         working-directory: cdk
         run: npm ci
 
+      # build frontend
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+
+      # synthesize CDK stack
       - name: CDK Synth
         working-directory: cdk
         run: npx cdk synth
