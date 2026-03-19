@@ -81,28 +81,13 @@ function App() {
     
     return (
         <div className='min-h-screen bg-white dark:bg-indigo-950 p-4'>
-            {/* page header */}
-            <div className='flex flex-col items-center mb-8 gap-2'>
-                {/* website title */}
-                <h1 className='text-3xl font-bold text-center whitespace-nowrap text-black dark:text-white'>Stock Movers Dashboard</h1>
-
-                {/* current page title */}
-                <h2 className='text-2xl font-bold text-center whitespace-nowrap text-violet-600 dark:text-violet-400'>{dates[0]} to {dates[dates.length - 1]}</h2>
-                
-                {/* theme toggler */}
-                <button
-                    className='flex items-center gap-2 px-4 py-2 text-base rounded-3xl border-4 border-indigo-950 text-violet-300 bg-indigo-950 shadow-md hover:border-violet-400 transition-border duration-150 dark:text-violet-600 dark:bg-white'
-                    onClick={toggleTheme}
-                >
-                    {theme === 'light' ? 'Toggle Dark Mode' : 'Toggle Light Mode'}
-                    {theme === 'light' ? <IoMoonOutline/> : <IoSunnyOutline/>}
-                </button>
-            </div>
+            {/* website title */}
+            <h1 className='text-3xl font-bold text-center whitespace-nowrap text-black dark:text-white'>Stock Movers Dashboard</h1>
 
             {/* page content */}
             {/* getMovers fetch in progress */}
             {loading ? (
-                <p className='flex justify-center text-2xl text-violet-600'>Loading...</p>
+                <p className='flex justify-center text-2xl text-violet-600 dark:text-violet-400'>Loading...</p>
             
                 // error fetching
             ) : error ? (
@@ -111,6 +96,20 @@ function App() {
                 // normal case
             ) : (
                 <div className='max-w-5xl mx-auto flex flex-col gap-10'>
+                    {/* page header */}
+                    <div className='flex flex-col items-center gap-2'>
+                        {/* current page title */}
+                        <h2 className='text-2xl font-bold text-center whitespace-nowrap text-violet-600 dark:text-violet-400'> {dates[0]} to {dates[dates.length - 1]}</h2>
+
+                        {/* theme toggler */}
+                        <button
+                            className='flex items-center gap-2 px-4 py-2 text-base rounded-3xl border-4 border-indigo-950 text-violet-300 bg-indigo-950 shadow-md hover:border-violet-400 transition-border duration-150 dark:text-violet-600 dark:bg-white'
+                            onClick={toggleTheme}
+                        >
+                            {theme === 'light' ? 'Toggle Dark Mode' : 'Toggle Light Mode'}
+                            {theme === 'light' ? <IoMoonOutline/> : <IoSunnyOutline/>}
+                        </button>
+                    </div>
                     {/* leaderboard of top movers according to current page */}
                     <Leaderboard movers={movers}/>
 
