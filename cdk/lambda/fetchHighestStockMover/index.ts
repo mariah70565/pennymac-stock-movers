@@ -31,7 +31,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
     const TABLENAME = process.env.STOCKS_TABLE_NAME!;
     const APIKEYSECRETNAME = process.env.MASSIVE_API_KEY_SECRET_NAME!;
 
-    console.log("Fetching highest stock mover...")
+    console.log("Fetching API KEY...")
 
     let massiveApiKey: string;
     // 1. fetch Massive API key from Secrets Manager
@@ -55,12 +55,14 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
         throw new Error("Failed to retrieve API key");
     }
 
-    const yesterday = new Date()
-    yesterday.setUTCDate(yesterday.getUTCDate() - 1)
-    const today = yesterday.toISOString().split('T')[0]; //yesterday's date in YYYY-MM-DD format to be called today
+    const day = new Date()
+    day.setUTCDate(day.getUTCDate() - 1)
+    const yesterday = day.toISOString().split('T')[0]; //yesterday's date in YYYY-MM-DD format to be called today
+
+    console.log(`Fetching highest stock mover for yesterday, ${yesterday}`)
 
     // avoid wasting API calls on weekends, when the market is closed
-    const dayOfWeek = yesterday.getUTCDay(); //get current day of week (0-6, where 0 is Sunday)
+    const dayOfWeek = day.getUTCDay(); //get current day of week (0-6, where 0 is Sunday)
     if (dayOfWeek === 0 || dayOfWeek === 6) { //if today is Saturday or Sunday, skip fetch and store
         console.log("Market is closed today, skipping fetch and store");
         return {
@@ -77,13 +79,13 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
                 //fetch aggregate stock data for all stocks
                 const response = await rest.getGroupedStocksAggregates( 
                 {
-                    date: today,
+                    date: yesterday,
                     adjusted: true,
                 });
 
                 // if no stock data is found for today, return empty array to signal no data found
                 if (!response.results || response.results.length === 0) {
-                    console.log("No stock data found for today");
+                    console.log(`No stock data found for yesterday, ${yesterday}`);
                     return [];
                 }
 
@@ -160,7 +162,7 @@ export const handler = async (event: ScheduledEvent, context: Context) => {
             TableName: TABLENAME,
             Item: {
                 leaderboard: { S: "TOP_MOVERS"}, //partition key
-                date: { S: today }, //current date as sort key
+                date: { S: yesterday }, //current date as sort key
                 ticker: { S: highestMover.ticker },
                 percentChange: { N: highestMover.percentChange.toString() }, //percent change as attribute
                 closePrice: { N: highestMover.closePrice.toString()} //close price as attribute

@@ -69,7 +69,7 @@ export class CdkStack extends cdk.Stack {
     // ++++++++ setting up EventBridge to trigger FetchHighestStockMover lambda every 24 hours +++++++++
     // defining FetchHighestStockMover EventBridge rule
     const scheduleRule = new events.Rule(this, 'FetchHighestStockMoverSchedule', {
-        schedule: events.Schedule.cron({ minute: '0', hour: '2' }) // trigger every 24 hours at 2:0 AM UTC / 7:05 PM PST (bumper time after stock market closes for Massive API to be available with the latest data)
+        schedule: events.Schedule.cron({ minute: '0', hour: '5' }) // trigger every 24 hours at 5:00 AM UTC / 10:00 PM PST (bumper time after stock market closes for Massive API to be available with the latest data)
     });
 
     // connecting EventBridge rule to FetchHighestStockMover lambda function
