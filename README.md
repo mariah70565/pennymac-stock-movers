@@ -20,7 +20,7 @@ A fully automated serverless pipeline that tracks daily stock market movers from
 - **CI/CD:** GitHub Actions
 
 ## Architecture Overview
-- **EventBridge** triggers FetchHighestStockMover lambda daily at 2am UTC
+- **EventBridge** triggers FetchHighestStockMover lambda daily at 5am UTC
 - **FetchHighestStockMover** fetches stock data from Massive API, calculates the highest percent change for each of the stocks in the watchlist, and store the result in DynamoDB
 - **DynamoDB** stores the daily top mover with its corresponding date of movement, ticker, percent change, and close price
 - **API Gateway** connects to a REST endpoint `GET /movers` with pagination support
