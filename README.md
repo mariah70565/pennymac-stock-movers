@@ -52,7 +52,7 @@ GitHub Actions automatically runs tests, builds the frontend, and deploys the  s
 ### 1. Clone the repository
 ```bash
 git clone
-cd pennymac-stock-movers
+cd stock-movers
 ```
 
 ### 2. Install CDK dependencies
@@ -79,7 +79,7 @@ export MASSIVE_API_KEY=<your_api_key>
 
 ### 6. 1st deploy to retrieve API Gateway URL for frontend
 ```bash
-cd ../cdk
+cd ../
 npx cdk deploy
 ```
 > API Gateway URL can be found from the deploy output, labeled `StockMoversApiEndpoint`. Save this for Step 9.
